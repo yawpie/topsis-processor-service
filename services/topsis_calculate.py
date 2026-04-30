@@ -73,7 +73,7 @@ def calculate_topsis(
         negative_distances,
     ):
         results.append({
-            "id": _get_value(mahasiswa, "id"),
+            # "id": _get_value(mahasiswa, "id"),
             "nama": _get_value(mahasiswa, "nama"),
             "nilai_preferensi": round(float(preference_value), 6),
             "jarak_ideal_positif": round(float(positive_distance), 6),

@@ -1,1 +1,0 @@
-from .mahasiswa_repo import bulk_insert_mahasiswa
