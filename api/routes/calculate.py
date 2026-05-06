@@ -1,6 +1,6 @@
 from fastapi import APIRouter, UploadFile, File
 from services.csv_service import parse_csv
-from services import hitung_topsis_numpy, hitung_topsis_math
+from services import hitung_topsis_numpy, hitung_topsis_math, generate_json
 router = APIRouter()
 
 
@@ -10,8 +10,9 @@ async def calculate_numpy(file: UploadFile = File(...)):
 
     data = parse_csv(content)
     result = hitung_topsis_numpy(data)
+    #todo implement request to gateway to save data to database
+    filename, json_file = generate_json(result)
     
-
     return {
         "message": "Upload berhasil",
         "data": result

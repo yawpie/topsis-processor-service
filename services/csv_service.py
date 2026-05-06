@@ -21,6 +21,13 @@ def parse_int(value):
 
     return int(value)
 
+def create_unique_name(original_name: str) -> str:
+    timestamp = pd.Timestamp.now().strftime("%Y%m%d%H%M%S")
+    random_suffix = pd.util.hash_pandas_object(pd.Series([original_name])).iloc[0] % 100000
+    extension = original_name[original_name.rfind("."):] if "." in original_name else ""
+    clean_name = original_name[:original_name.rfind(".")] if "." in original_name else original_name
+    clean_name = clean_name.replace(" ", "_").replace("/", "_").replace("\\", "_").replace(":", "_").replace("*", "_").replace("?", "_").replace("\"", "_").replace("<", "_").replace(">", "_").replace("|", "_")
+    return f"{clean_name}_{timestamp}_{random_suffix}{extension}"
 
 def parse_csv(content: bytes):
     df = pd.read_csv(
@@ -36,6 +43,7 @@ def parse_csv(content: bytes):
     for _, row in df.iterrows():
         data_list.append({
             "nama": str(row["nama"]).strip(),
+            "unique_name": create_unique_name(str(row["nama"])),
             "ipk": parse_float(row["ipk"]),
             "semester": parse_int(row["semester"]),
             "penghasilan_ortu": parse_int(row["penghasilan_ortu"]),

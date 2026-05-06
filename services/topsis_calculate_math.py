@@ -68,6 +68,7 @@ def calculate_topsis(
         results.append({
             # "id": _get_value(mahasiswa, "id"),
             "nama": _get_value(mahasiswa, "nama"),
+            "unique_name": _get_value(mahasiswa, "unique_name"), # todo hapus kalau sudah ada fix yang lebih baik
             "nilai_preferensi": round(preference_value, 6),
             "jarak_ideal_positif": round(positive_distance, 6),
             "jarak_ideal_negatif": round(negative_distance, 6),
