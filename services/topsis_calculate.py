@@ -1,18 +1,35 @@
 from typing import Any, Dict, Iterable, List, Mapping, Optional
-
+from models import Criterion
 import numpy as np
 
 
-CRITERIA = {
-    "ipk": "benefit",
-    "semester": "cost",
-    "penghasilan_ortu": "cost",
-    "jumlah_tanggungan": "benefit",
-    "keaktifan_organisasi": "benefit",
-    "skor_prestasi": "benefit",
-}
+# CRITERIA = {
+#     "ipk": "benefit",
+#     "semester": "cost",
+#     "penghasilan_ortu": "cost",
+#     "jumlah_tanggungan": "benefit",
+#     "keaktifan_organisasi": "benefit",
+#     "skor_prestasi": "benefit",
+# }
 
-DEFAULT_WEIGHTS = {criterion: 1 for criterion in CRITERIA}
+CRITERIA_MODELS = [
+    Criterion("ipk", weight=0.3, is_benefit=True),
+    Criterion("semester", weight=0.2, is_benefit=False),
+    Criterion("penghasilan_ortu", weight=0.2, is_benefit=False),
+    Criterion("jumlah_tanggungan", weight=0.1, is_benefit=True),
+    Criterion("keaktifan_organisasi", weight=0.1, is_benefit=True),
+    Criterion("skor_prestasi", weight=0.1, is_benefit=True),
+]
+
+# DEFAULT_WEIGHTS = {criterion: 1 for criterion in CRITERIA}
+DEFAULT_WEIGHTS = {
+    "ipk": 0.3,
+    "semester": 0.2,
+    "penghasilan_ortu": 0.2,
+    "jumlah_tanggungan": 0.1,
+    "keaktifan_organisasi": 0.1,
+    "skor_prestasi": 0.1,
+}
 
 ORGANIZATION_SCORE = {
     "tidak aktif": 1,
@@ -31,7 +48,7 @@ def calculate_topsis(
     if not data:
         return []
 
-    criteria_names = tuple(CRITERIA)
+    criteria_names = tuple(criterion.name for criterion in CRITERIA_MODELS)
     weight_vector = _normalize_weights(weights or DEFAULT_WEIGHTS)
     decision_matrix = np.array(
         [_build_criteria_values(mahasiswa) for mahasiswa in data],
@@ -48,7 +65,7 @@ def calculate_topsis(
     weighted_matrix = normalized_matrix * weight_vector
 
     benefit_mask = np.array(
-        [CRITERIA[criterion] == "benefit" for criterion in criteria_names]
+        [criterion.is_benefit for criterion in CRITERIA_MODELS]
     )
     max_values = weighted_matrix.max(axis=0)
     min_values = weighted_matrix.min(axis=0)
@@ -92,19 +109,20 @@ def calculate_topsis(
 def hitung_topsis(
     mahasiswa_list: Iterable[Any],
     weights: Optional[Mapping[str, float]] = None,
+    criterion_models: Optional[List[Criterion]] = None,
 ) -> List[Dict[str, Any]]:
     return calculate_topsis(mahasiswa_list, weights)
 
 
 def _normalize_weights(weights: Mapping[str, float]) -> np.ndarray:
-    missing_criteria = set(CRITERIA) - set(weights)
+    missing_criteria = set(criterion.name for criterion in CRITERIA_MODELS) - set(weights)
     if missing_criteria:
         raise ValueError(
             f"Bobot belum lengkap untuk kriteria: {', '.join(sorted(missing_criteria))}"
         )
 
     weight_vector = np.array(
-        [_to_float(weights[criterion], criterion) for criterion in CRITERIA],
+        [_to_float(weights[criterion.name], criterion.name) for criterion in CRITERIA_MODELS],
         dtype=float,
     )
     total_weight = weight_vector.sum()
@@ -117,19 +135,15 @@ def _normalize_weights(weights: Mapping[str, float]) -> np.ndarray:
 
 def _build_criteria_values(mahasiswa: Any) -> List[float]:
     return [
-        _to_float(_get_value(mahasiswa, "ipk"), "ipk"),
-        _to_float(_get_value(mahasiswa, "semester"), "semester"),
-        _to_float(_get_value(mahasiswa, "penghasilan_ortu"), "penghasilan_ortu"),
-        _to_float(_get_value(mahasiswa, "jumlah_tanggungan"), "jumlah_tanggungan"),
-        _organization_to_score(_get_value(mahasiswa, "keaktifan_organisasi")),
-        _to_float(_get_value(mahasiswa, "skor_prestasi"), "skor_prestasi"),
+        _to_float(_get_value(mahasiswa, criterion.name), criterion.name)
+        for criterion in CRITERIA_MODELS
     ]
 
 
 def _build_original_values(mahasiswa: Any) -> Dict[str, Any]:
     return {
-        criterion: _get_value(mahasiswa, criterion)
-        for criterion in CRITERIA
+        criterion.name: _get_value(mahasiswa, criterion.name)
+        for criterion in CRITERIA_MODELS
     }
 
 
