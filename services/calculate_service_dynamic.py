@@ -13,36 +13,36 @@ DEFAULT_CRITERIA = [
     Criterion("skor_prestasi", weight=0.1, type="BENEFIT"),
 ]
 
-ORGANIZATION_SCORE = {
-    "tidak aktif": 1,
-    "kurang aktif": 2,
-    "cukup aktif": 3,
-    "aktif": 4,
-    "sangat aktif": 5,
-}
+# ORGANIZATION_SCORE = {
+#     "tidak aktif": 1,
+#     "kurang aktif": 2,
+#     "cukup aktif": 3,
+#     "aktif": 4,
+#     "sangat aktif": 5,
+# }
 
 CriterionInput = Criterion | CriterionBody | Mapping[str, Any]
 
 
 def hitung_topsis(
-    mahasiswa_list: Iterable[Any],
+    alternative_list: Iterable[Any],
     criteria_body: CriterionInput | Sequence[CriterionInput] | None = None,
 ) -> List[Dict[str, Any]]:
-    return calculate_topsis(mahasiswa_list, criteria_body)
+    return calculate_topsis(alternative_list, criteria_body)
 
 
 def calculate_topsis(
-    mahasiswa_list: Iterable[Any],
+    alternative_list: Iterable[Any],
     criteria_body: CriterionInput | Sequence[CriterionInput] | None = None,
 ) -> List[Dict[str, Any]]:
-    data = list(mahasiswa_list)
+    data = list(alternative_list)
     if not data:
         return []
 
     criteria = _build_criteria(criteria_body)
     weight_vector = _build_weight_vector(criteria)
     decision_matrix = np.array(
-        [_build_criteria_values(mahasiswa, criteria) for mahasiswa in data],
+        [_build_criteria_values(alternative, criteria) for alternative in data],
         dtype=float,
     )
 
@@ -83,7 +83,7 @@ def calculate_topsis(
     ):
         results.append({
             "nama": _get_value(alternative, "nama"),
-            "unique_name": _get_value(alternative, "unique_name"),
+            "kode_alternatif": _get_value(alternative, "kode_alternatif"),
             "nilai_preferensi": round(float(preference_value), 6),
             "jarak_ideal_positif": round(float(positive_distance), 6),
             "jarak_ideal_negatif": round(float(negative_distance), 6),
@@ -178,27 +178,27 @@ def _build_original_values(
 
 
 def _field_to_float(value: Any, field: str) -> float:
-    if field == "keaktifan_organisasi":
-        return _organization_to_score(value)
+    # if field == "keaktifan_organisasi":
+    #     return _organization_to_score(value)
 
     return _to_float(value, field)
 
+# @deprecated
+# def _organization_to_score(value: Any) -> float:
+#     if isinstance(value, (int, float)):
+#         return float(value)
 
-def _organization_to_score(value: Any) -> float:
-    if isinstance(value, (int, float)):
-        return float(value)
+#     normalized_value = str(value or "").strip().lower()
+#     if normalized_value in ORGANIZATION_SCORE:
+#         return float(ORGANIZATION_SCORE[normalized_value])
 
-    normalized_value = str(value or "").strip().lower()
-    if normalized_value in ORGANIZATION_SCORE:
-        return float(ORGANIZATION_SCORE[normalized_value])
-
-    try:
-        return float(normalized_value.replace(",", "."))
-    except ValueError as exc:
-        raise ValueError(
-            "Nilai keaktifan_organisasi harus berupa angka atau salah satu dari: "
-            f"{', '.join(ORGANIZATION_SCORE)}"
-        ) from exc
+#     try:
+#         return float(normalized_value.replace(",", "."))
+#     except ValueError as exc:
+#         raise ValueError(
+#             "Nilai keaktifan_organisasi harus berupa angka atau salah satu dari: "
+#             f"{', '.join(ORGANIZATION_SCORE)}"
+#         ) from exc
 
 
 def _find_duplicate_names(criteria: Sequence[Criterion]) -> set[str]:

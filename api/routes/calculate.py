@@ -2,8 +2,8 @@ import json
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import TypeAdapter, ValidationError
-from services.csv_service import parse_csv
-from services import hitung_topsis_numpy
+from services import parse_csv_dynamic
+from services import hitung_topsis_dynamic
 from models import CriterionBody
 
 router = APIRouter()
@@ -13,15 +13,15 @@ criterion_body_adapter = TypeAdapter(list[CriterionBody])
 
 
 @router.post("/calculate")
-async def calculate_numpy(
-    criterionBody: str = Form(...),
+async def calculate(
+    criterionBody: str | None = Form(None),
     file: UploadFile = File(...),
 ):
     content = await file.read()
 
     criteria = _parse_criterion_body(criterionBody)
-    data = parse_csv(content)
-    result = hitung_topsis_numpy(data, criteria)
+    data = parse_csv_dynamic(content)
+    result = hitung_topsis_dynamic(data, criteria if criterionBody is not None else None)
 
     return {
         "message": "Upload berhasil",
@@ -29,7 +29,10 @@ async def calculate_numpy(
     }
 
 
-def _parse_criterion_body(criterion_body: str) -> list[CriterionBody]:
+def _parse_criterion_body(criterion_body: str | None) -> list[CriterionBody]:
+    if criterion_body is None:
+        return []
+
     try:
         raw_criteria = json.loads(criterion_body)
     except json.JSONDecodeError as exc:
