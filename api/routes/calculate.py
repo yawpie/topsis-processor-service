@@ -20,7 +20,12 @@ async def calculate(
     content = await file.read()
 
     criteria = _parse_criterion_body(criterionBody)
-    data = parse_csv_dynamic(content)
+
+    try:
+        data = parse_csv_dynamic(content)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
     result = hitung_topsis_dynamic(data, criteria if criterionBody is not None else None)
 
     return {

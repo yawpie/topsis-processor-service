@@ -111,9 +111,21 @@ def _deduplicate_columns(columns: list[str]) -> list[str]:
 def _find_identifier_column(columns) -> str:
     columns = list(columns)
 
-    for candidate in IDENTIFIER_COLUMNS:
-        if candidate in columns:
-            return candidate
+    matches = [
+        candidate
+        for candidate in IDENTIFIER_COLUMNS
+        if candidate in columns
+    ]
+
+    if len(matches) > 1:
+        raise ValueError(
+            f"CSV memiliki lebih dari satu kolom identifier: {', '.join(matches)}. "
+            f"Harap gunakan hanya satu kolom identifier dari: {', '.join(IDENTIFIER_COLUMNS)}. "
+            f"Kolom identifier lainnya harus dihapus atau diganti namanya."
+        )
+
+    if len(matches) == 1:
+        return matches[0]
 
     return columns[0]
 
